@@ -28,6 +28,8 @@ class Tweet(typing.NamedTuple, snscrape.base.Item):
 	tcooutlinks: list
 	tcooutlinksss: str
 	retweetedTweet: typing.Optional['Tweet'] = None
+	mediaURLs: typing.Optional['Tweet'] = None
+
 
 	def __str__(self):
 		return self.url
@@ -251,15 +253,16 @@ class TwitterAPIScraper(snscrape.base.Scraper):
 		tweetID = tweet['id'] if 'id' in tweet else int(tweet['id_str'])
 		content = tweet['full_text']
 		username = obj['globalObjects']['users'][tweet['user_id_str']]['screen_name']
-		date = datetime.datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y').replace(tzinfo = datetime.timezone.utc)
+		date = datetime.datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y').replace(tzinfo = datetime.timezone.utc);
 		outlinks = [u['expanded_url'] for u in tweet['entities']['urls']] if 'urls' in tweet['entities'] else []
+		mediaURLs = [u['media_url_https'] for u in tweet['entities']['media']] if 'media' in tweet['entities'] else []
 		tcooutlinks = [u['url'] for u in tweet['entities']['urls']] if 'urls' in tweet['entities'] else []
 		url = f'https://twitter.com/{username}/status/{tweetID}'
 		if 'retweeted_status_id_str' in tweet:
 			retweetedTweet = self._tweet_to_tweet(obj['globalObjects']['tweets'][tweet['retweeted_status_id_str']], obj)
 		else:
 			retweetedTweet = None
-		return Tweet(url, date, content, tweetID, username, outlinks, ' '.join(outlinks), tcooutlinks, ' '.join(tcooutlinks), retweetedTweet = retweetedTweet)
+		return Tweet(url, date, content, tweetID, username, outlinks, ' '.join(outlinks), tcooutlinks, ' '.join(tcooutlinks), retweetedTweet = retweetedTweet, mediaURLs = mediaURLs)
 
 
 class TwitterSearchScraper(TwitterAPIScraper):
